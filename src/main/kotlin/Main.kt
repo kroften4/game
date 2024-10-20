@@ -1,97 +1,110 @@
-fun bot(x:Human, y:Human){
-    if (x is Wizard){
-        if ((x.health <= 50) and (x.pool > 0)) {
-            x.skill(x)
-            println("2\n")
-        }
-        else {
-            x.attack(y)
-            println("1\n")
-        }
-    }
-    else if (x is Knight){
-        if ((x.guard <= 20) and (x.pool > 0)) {
-            x.skill(x)
-            println("2\n")
-        }
-        else{
-            x.attack(y)
-            println("1\n")
-        }
-    }
-    else{
-        val g: Int = (1..2).random()
-        if ((g == 1) and (x.pool > 0)) {
-            x.skill(y)
-            println("2\n")
-        }
-        else {
-            x.attack(y)
-            println("1\n")
+fun getBotMove(x: Hero, y: Hero): String {
+    when (x.type) {
+        HeroType.WIZARD ->
+            if ((x.health <= 50) and (x.mana > 0)) {
+                x.useSkill(x)
+                return "2"
+            }
+            else {
+                x.attack(y)
+                return "1"
+            }
+
+        HeroType.KNIGHT ->
+            if ((x.shield <= 20) and (x.mana > 0)) {
+                x.useSkill(x)
+                return "2"
+            }
+            else{
+                x.attack(y)
+                return "1"
+            }
+
+        HeroType.ROBOT -> {
+            val g: Int = (1..2).random()
+            if ((g == 1) and (x.mana > 0)) {
+                x.useSkill(y)
+                return "2"
+            } else {
+                x.attack(y)
+                return "1"
+            }
         }
     }
 }
 
+fun chooseHeroFromInput(): Hero? {
+    val inputPlayer: HeroType?
+    try {
+        inputPlayer = HeroType.valueOf(readln().uppercase())
+    } catch (e: IllegalArgumentException) {
+        return null
+    }
+    val hero: Hero = when (inputPlayer){
+        HeroType.WIZARD -> Wizard()
+        HeroType.KNIGHT -> Knight()
+        HeroType.ROBOT -> Robot()
+    }
+    return hero
+}
 
 
 fun main(){
-    println("Обзор персонажей:\n Wizard - атака: 0-15 здоровье: 100 щит: 20 скилл: хилл +50, но мана -20\n Knight - атака: 0-7 здоровье: 100 щит: 100 скилл: щит +30 защита -20\n Robot - атака: 0-20 щит: 50 скилл: единоразовый урон +(40-60) батарея -50\n\n\n")
-    println("Выбирайте персонажа: Wizard, Knight, Robot")
-    val input = readln()
-    println("Выбирайте противника: Wizard, Knight, Robot")
-    val input1 = readln()
-    val input_enum = Character.valueOf(input.uppercase())
-    val input_enum1 = Character.valueOf(input1.uppercase())
+    println(
+        "Обзор персонажей:\n" +
 
-    val hero: Human = when (input_enum){
-        Character.WIZARD -> Wizard()
-        Character.KNIGHT -> Knight()
-        Character.ROBOT -> Robot()
-    }
-    val mob: Human = when (input_enum1){
-        Character.WIZARD -> Wizard()
-        Character.KNIGHT -> Knight()
-        Character.ROBOT -> Robot()
-    }
+        // TODO: how tf do i use static methods here instead of creating dummy objects
+        Wizard().description +
+        Knight().description +
+        Robot().description + "\n"
+    )
+
+    // TODO: force the user to choose a valid hero instead of choosing Wizard by default
+    println("Выбирайте персонажа: Wizard, Knight, Robot")
+    val player: Hero = chooseHeroFromInput() ?: Wizard()
+    println("Выбирайте противника: Wizard, Knight, Robot")
+    val enemy: Hero = chooseHeroFromInput() ?: Wizard()
+
     while (true){
-        if (mob.health <= 0) {
+        if (enemy.health <= 0) {
             println("ВЫ победили!")
             break
         }
-        if (hero.health <= 0) {
+        if (player.health <= 0) {
             println("ВЫ проиграли!")
             break
         }
-        println("1 - атака с руки\n2 - скилл\nДелайте ход: ")
-        val move = readln()
-        when(move){
-            "1" -> hero.attack(mob)
-            "2" -> hero.skill(mob)
 
+        println("1 - атака с руки\n2 - скилл\nДелайте ход: ")
+        val playerMove = readln()
+        when (playerMove) {
+            "1" -> player.attack(enemy)
+            "2" -> player.useSkill(enemy)
         }
         println("Ход противника: ")
-        bot(mob, hero)
-        println("Здоровье противника ${mob.health}")
-        when (input_enum1){
-            Character.WIZARD -> println("Полоска mana ${mob.pool}\nПолоска guard ${mob.guard}\n\n")
-            Character.KNIGHT -> println("Полоска defence ${mob.pool}\nПолоска guard ${mob.guard}\n\n")
-            Character.ROBOT -> println("Полоска battery ${mob.pool}\nПолоска guard ${mob.guard}\n\n")
+        val botMove = getBotMove(enemy, player)
+        when (botMove) {
+            "1" -> {
+                println("1")
+                enemy.attack(player)
+            }
+            "2" -> {
+                println("2")
+                enemy.useSkill(player)
+            }
         }
-        println("Ваше здоровье ${hero.health}")
-        when (input_enum){
-            Character.WIZARD -> println("Полоска mana ${hero.pool}\nПолоска guard ${hero.guard}\n\n")
-            Character.KNIGHT -> println("Полоска defence ${hero.pool}\nПолоска guard ${hero.guard}\n\n")
-            Character.ROBOT -> println("Полоска battery ${hero.pool}\nПолоска guard ${hero.guard}\n\n")
-        }
-        if (hero.guard <= 0){
+
+        println("СТАТИСТИКА ПРОТИВНИКА:")
+        println(enemy.stats)
+
+        println("ВАША СТАТИСТИКА:")
+        println(player.stats)
+
+        if (player.shield <= 0){
             println("ВАШ ЩИТ СЛОМАН")
         }
-        if (mob.guard <= 0){
+        if (enemy.shield <= 0){
             println("ЩИТ ПРОТИВНИКА СЛОМАН\n\n")
         }
-
-
-
-
     }
 }
